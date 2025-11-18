@@ -238,7 +238,6 @@
         details.push({ action: action, correctKey: correctKey, selectedKey: selected ? selected.value : '', isCorrect: selected && selected.value === correctKey });
       });
       const resultData = { name: userName, difficulty: currentDifficulty, score: score, total: fieldsets.length, details: details };
-      sendResults(resultData);
       // --- スプシ向けデータ作成 ---
       const resultPayload = {
         name: userName,
@@ -271,11 +270,9 @@
   })
     .then(() => {
       console.log("送信成功（no-cors なのでレスポンスは読めないが OK）");
-      alert("結果をスプレッドシートに保存しました！");
     })
     .catch(err => {
       console.error("送信エラー:", err);
-      alert("送信中にエラーが発生しました");
     });
 
   console.log("送信データ:", results);
