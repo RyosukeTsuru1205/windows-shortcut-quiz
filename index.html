@@ -264,25 +264,22 @@
     }
 
     function sendResults(results) {
-      fetch("https://script.google.com/macros/s/AKfycbxpSfT2WoF3aOhWUruq4GGuNi3spHDnCYFGncFdl6qWeQDavXYKS2C6M6NUxWtRo83OEQ/exec", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(results)
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log("送信成功:", data);
-          alert("結果をスプレッドシートに保存しました！");
-        })
-        .catch(err => {
-          console.error("送信エラー:", err);
-          alert("送信中にエラーが発生しました");
-        });
-      console.log('送信データ:', results);
-    }
+  fetch("https://script.google.com/macros/s/AKfycbzwlXpxmijzBC-ZZDDCJ3Mu7RQuwblkB-TWBfL2IVwnY4AN9IATZRQCcCxrpWQ-PpBm4Q/exec", {
+    method: "POST",
+    mode: "no-cors",                 // ← これが大事
+    body: JSON.stringify(results)    // ヘッダーは付けない
+  })
+    .then(() => {
+      console.log("送信成功（no-cors なのでレスポンスは読めないが OK）");
+      alert("結果をスプレッドシートに保存しました！");
+    })
+    .catch(err => {
+      console.error("送信エラー:", err);
+      alert("送信中にエラーが発生しました");
+    });
 
+  console.log("送信データ:", results);
+}
   </script>
 </body>
 
