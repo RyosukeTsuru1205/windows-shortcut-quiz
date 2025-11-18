@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Windows ショートカットクイズ - 最終版</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .quiz-container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px 30px;
+      max-width: 800px;
+      margin: 40px auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    p {
+      color: #555;
+      text-align: center;
+    }
+
+    label[for="difficulty"] {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    select,
+    button {
+      padding: 8px 12px;
+      margin-right: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #0078d4;
+      color: white;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #005a9e;
+    }
+
+    fieldset.question {
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+
+    fieldset.question legend {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    fieldset.question label {
+      display: block;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .correct {
+      color: green;
+      font-weight: bold;
+    }
+
+    .wrong {
+      color: red;
+      text-decoration: line-through;
+    }
+
+    #score {
+      font-size: 16px;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="quiz-container">
+    <h1>Windows ショートカットクイズ</h1>
+    <p>難易度を選択し、「クイズを開始」ボタンを押すと、ランダムで7問が出題されます。</p>
+
+    <!-- 氏名入力欄 -->
+    <div style="text-align:center; margin-bottom:10px;">
+      <label for="userName">氏名：</label>
+      <input type="text" id="userName" placeholder="氏名を入力してください"
+        style="padding: 8px 12px; margin-right: 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px;">
+    </div>
+    <div style="text-align:center; margin-bottom:20px;">
+      <label for="difficulty">難易度：</label>
+      <select id="difficulty">
+        <option value="beginner">初級</option>
+        <option value="intermediate">中級</option>
+        <option value="advanced">上級</option>
+      </select>
+      <button onclick="generateQuiz()">クイズを開始</button>
+    </div>
+
+    <form id="quizForm"></form>
+
+    <div style="text-align:center;">
+      <button id="checkButton" onclick="checkAnswers()" style="display:none;">採点する</button>
+    </div>
+    <div id="score"></div>
+  </div>
+
+  <script>
+    let currentQuiz = [];
+    let currentDifficulty = "";
+
+    const questionsData = {
+      beginner: [{ "key": "Ctrl + C", "action": "選択した文字列や項目をコピーする" }, { "key": "Ctrl + V", "action": "クリップボードから貼り付ける" }, { "key": "Ctrl + X", "action": "選択した文字列や項目を切り取る" }, { "key": "Ctrl + Z", "action": "最後の操作を元に戻す" }, { "key": "Ctrl + Y", "action": "元に戻した操作をやり直す" }, { "key": "Ctrl + A", "action": "すべてを選択する" }, { "key": "Alt + Tab", "action": "開いているウィンドウを切り替える" }, { "key": "Alt + F4", "action": "アクティブなウィンドウを閉じる" }, { "key": "Windows キー", "action": "スタートメニューを開閉する" }, { "key": "Windows キー + D", "action": "デスクトップを表示/非表示にする" }, { "key": "Windows キー + E", "action": "エクスプローラーを開く" }, { "key": "Windows キー + L", "action": "コンピューターをロックする" }, { "key": "F2", "action": "選択項目の名前を変更する" }, { "key": "F5", "action": "ウィンドウを更新する" }, { "key": "Delete", "action": "選択項目をごみ箱に移動する/カーソルの右側の文字を削除する" }, { "key": "F3", "action": "ファイルまたはフォルダーを検索する" }, { "key": "F4", "action": "エクスプローラーでアドレスバーのリストを表示する" }, { "key": "F10", "action": "アクティブなアプリでメニューバーを有効にする" }, { "key": "Alt + Enter", "action": "選択した項目のプロパティを表示する" }, { "key": "Alt + Spacebar", "action": "アクティブなウィンドウのショートカットメニューを開く" }, { "key": "Ctrl + D", "action": "選択した項目をごみ箱に移動する" }, { "key": "Ctrl + Right arrow", "action": "カーソルを次の単語の先頭に移動する" }, { "key": "Ctrl + Left arrow", "action": "カーソルを前の単語の先頭に移動する" }, { "key": "Ctrl + Down arrow", "action": "カーソルを次の段落の先頭に移動する" }, { "key": "Ctrl + Up arrow", "action": "カーソルを前の段落の先頭に移動する" }, { "key": "Esc", "action": "現在の作業を停止する/タスクを終了する" }, { "key": "PrtScn", "action": "画面全体のスクリーンショットを撮り、クリップボードにコピーする" }, { "key": "Shift + F10", "action": "選択した項目のコンテキストメニューを表示する" }],
+      intermediate: [{ "key": "Ctrl + Shift + Esc", "action": "タスク マネージャーを開く" }, { "key": "Windows キー + I", "action": "設定を開く" }, { "key": "Windows キー + Tab", "action": "タスク ビューを開く" }, { "key": "Windows キー + 左方向キー", "action": "ウィンドウを画面の左側にスナップする" }, { "key": "Windows キー + 右方向キー", "action": "ウィンドウを画面の右側にスナップする" }, { "key": "Windows キー + 上方向キー", "action": "アクティブウィンドウを最大化する" }, { "key": "Windows キー + Shift + S", "action": "画面の領域をキャプチャしてクリップボードに保存する" }, { "key": "Windows キー + R", "action": "[ファイル名を指定して実行] を開く" }, { "key": "Windows キー + V", "action": "クリップボードを開く" }, { "key": "Ctrl + Shift + V", "action": "プレーンテキストとして貼り付ける" }, { "key": "Windows キー + F", "action": "フィードバック ハブを開く" }, { "key": "Ctrl + Esc", "action": "スタートメニューを開く" }, { "key": "F6", "action": "ウィンドウ内の要素を順番に切り替える" }, { "key": "Windows キー + A", "action": "アクション センターを開く" }, { "key": "Windows キー + B", "action": "通知領域にフォーカスを移す" }, { "key": "Windows キー + H", "action": "音声入力を開始する" }, { "key": "Windows キー + J", "action": "利用可能な Windows ヒントにフォーカスを設定する" }, { "key": "Windows キー + K", "action": "Connect クイックアクションを開く" }, { "key": "Windows キー + M", "action": "すべてのウィンドウを最小化する" }, { "key": "Windows キー + O", "action": "画面の回転をロックする" }, { "key": "Windows キー + P", "action": "プレゼンテーション表示モードを選択する" }, { "key": "Windows キー + Ctrl + Q", "action": "クイック アシストを開く" }, { "key": "Windows キー + T", "action": "タスクバーのアプリを順番に選択する" }, { "key": "Windows キー + U", "action": "簡単操作センターを開く" }, { "key": "Windows キー + Shift + V", "action": "通知を順番に切り替える" }, { "key": "Windows キー + X", "action": "クイック リンク メニューを開く" }, { "key": "Windows キー + .", "action": "絵文字パネルを開く" }, { "key": "Windows キー + ,", "action": "一時的にデスクトップを表示する" }, { "key": "Windows キー + Pause", "action": "システムのプロパティを表示する" }, { "key": "Windows キー + Ctrl + F", "action": "ネットワーク上の PC を検索する" }, { "key": "Windows キー + Shift + M", "action": "最小化されたウィンドウを元に戻す" }, { "key": "Windows キー + Home", "action": "アクティブウィンドウ以外を最小化または元に戻す" }, { "key": "Windows キー + Down arrow", "action": "アクティブウィンドウを最小化する" }, { "key": "Windows キー + Shift + Up arrow", "action": "アクティブウィンドウを上下いっぱいに伸ばす" }, { "key": "Windows キー + Shift + Down arrow", "action": "アクティブウィンドウを縦方向に元に戻す/最小化する" }, { "key": "Alt + Left arrow", "action": "前のページやフォルダーに戻る" }, { "key": "Alt + Right arrow", "action": "次のページやフォルダーに進む" }, { "key": "Alt + Page Up", "action": "1画面分上にスクロールする" }, { "key": "Alt + Page Down", "action": "1画面分下にスクロールする" }, { "key": "Ctrl + Alt + Tab", "action": "矢印キーで開いているすべてのアプリを切り替える" }, { "key": "F11", "action": "アクティブウィンドウを最大化または最小化する" }, { "key": "Ctrl + Shift + N", "action": "新しいフォルダーを作成する" }, { "key": "Ctrl + Shift + Tab", "action": "前のタブに移動する" }, { "key": "Ctrl + T", "action": "新しいタブを開く" }, { "key": "Ctrl + W", "action": "アクティブなタブを閉じる（タブが1つの場合はウィンドウを閉じる）" }, { "key": "Ctrl + Tab", "action": "次のタブに移動する" }, { "key": "Ctrl + E", "action": "検索ボックスを選択する" }, { "key": "Ctrl + L", "action": "アドレスバーにフォーカスする" }, { "key": "Ctrl + N", "action": "新しいウィンドウを開く" }, { "key": "Ctrl + Shift + E", "action": "ナビゲーション ペイン内のすべてのフォルダーを展開する" }, { "key": "Ctrl + Shift + Number", "action": "表示スタイルを変更する (例: 2 は大きいアイコン、6 は詳細表示)" }, { "key": "Ctrl + Plus (+)", "action": "すべての列の幅を自動調整する (テンキー使用)" }, { "key": "Ctrl + mouse scroll", "action": "ファイルやフォルダーのアイコンサイズを変更する" }, { "key": "Alt + D", "action": "アドレスバーを選択する" }, { "key": "Alt + P", "action": "プレビュー ウィンドウを表示/非表示にする" }, { "key": "Alt + Shift + P", "action": "詳細ウィンドウを表示/非表示にする" }, { "key": "Alt + Up arrow", "action": "1つ上のフォルダ階層に移動する" }, { "key": "Ctrl + arrow key + Spacebar", "action": "複数の個別項目を選択する" }, { "key": "Ctrl + Shift + arrow key", "action": "テキストのブロックを選択する" }, { "key": "Shift + Arrow keys", "action": "複数の項目を選択する" }, { "key": "Windows キー + Q", "action": "検索を開く" }, { "key": "Windows キー + S", "action": "検索を開く" }, { "key": "Windows キー + W", "action": "ウィジェットを開く" }, { "key": "Windows キー + N", "action": "通知センターとカレンダーを開く" }, { "key": "Windows キー + +", "action": "拡大鏡でズームインする" }, { "key": "Windows キー + -", "action": "拡大鏡でズームアウトする" }, { "key": "Windows キー + Esc", "action": "拡大鏡を終了する" }, { "key": "Windows キー + /", "action": "IME の再変換を開始する" }, { "key": "Windows キー + PrtScn", "action": "全画面のスクリーンショットを撮ってファイルに保存する" }, { "key": "Windows キー + Alt + D", "action": "タスクバーの日付と時刻を表示/非表示にする" }, { "key": "Windows キー + Spacebar", "action": "入力言語とキーボードレイアウトを切り替える" }, { "key": "Windows キー + Shift + Enter", "action": "UWP アプリを全画面表示する" }, { "key": "Windows キー + Shift + Left arrow", "action": "アクティブウィンドウを左のモニターに移動する" }, { "key": "Windows キー + Shift + Right arrow", "action": "アクティブウィンドウを右のモニターに移動する" }, { "key": "Windows キー + Shift + Spacebar", "action": "入力言語とキーボードレイアウトを逆方向に切り替える" }, { "key": "Windows キー + Shift + R", "action": "画面の領域を動画として記録する" }],
+      advanced: [{ "key": "Windows キー + Ctrl + D", "action": "新しい仮想デスクトップを作成する" }, { "key": "Windows キー + Ctrl + 左方向キー", "action": "左の仮想デスクトップに切り替える" }, { "key": "Windows キー + Ctrl + 右方向キー", "action": "右の仮想デスクトップに切り替える" }, { "key": "Windows キー + Ctrl + F4", "action": "現在の仮想デスクトップを閉じる" }, { "key": "Shift + Delete", "action": "選択項目をごみ箱に移動せずに完全に削除する" }, { "key": "Windows キー + C", "action": "Microsoft Copilot を開く" }, { "key": "Ctrl + Shift + アプリアイコン", "action": "アプリを管理者として開く" }, { "key": "Ctrl + Alt + Del", "action": "セキュリティ画面を開く" }, { "key": "Windows キー + G", "action": "ゲームバーを開く" }, { "key": "Windows キー + Alt + B", "action": "HDR をオンまたはオフにする" }, { "key": "Windows キー + Alt + K", "action": "サポートされているアプリでマイクをミュート/解除する" }, { "key": "Windows キー + Ctrl + Shift + B", "action": "画面が黒いときにデバイスを起動する" }, { "key": "Alt + PrtScn", "action": "アクティブウィンドウのスクリーンショットをクリップボードにコピーする" }, { "key": "Windows キー + Shift + C", "action": "チャーム メニューを開く" }, { "key": "Windows キー + Y", "action": "Windows Mixed Reality とデスクトップの入力を切り替える" }, { "key": "Windows キー + Z", "action": "全画面表示のアプリで利用可能なコマンドを表示する" }, { "key": "Windows キー + Ctrl + Shift + Number", "action": "タスクバーにピン留めされたアプリを管理者として新しいインスタンスで開く" }, { "key": "Windows キー + Ctrl + Number", "action": "タスクバーにピン留めされたアプリの最後に使用したウィンドウに切り替える" }, { "key": "Windows キー + Shift + Number", "action": "タスクバーにピン留めされたアプリの新しいインスタンスを起動する" }, { "key": "Windows キー + Alt + Number", "action": "タスクバーにピン留めされたアプリのジャンプリストを開く" }, { "key": "Alt + F8", "action": "サインイン画面でパスワードを表示する" }, { "key": "Ctrl + Shift", "action": "複数のキーボードレイアウトがある場合にレイアウトを切り替える" }, { "key": "Ctrl + Spacebar", "action": "IME をオンまたはオフにする" }, { "key": "Alt + Shift + Arrow keys", "action": "スタート メニューのグループやタイルを移動する" }, { "key": "Ctrl + mouse drag a file", "action": "ドロップした場所にファイルのコピーを作成する" }, { "key": "Alt + mouse drag a file", "action": "ドロップした場所に元のファイルへのショートカットを作成する" }, { "key": "Shift + mouse drag a file", "action": "ドロップした場所にファイルを移動する" }, { "key": "Shift + mouse right-click", "action": "選択した項目の詳細オプション メニューを表示する" }, { "key": "Ctrl + mouse scroll", "action": "ファイルやフォルダーのアイコンサイズや外観を変更する" }, { "key": "Ctrl + select a grouped app icon on the taskbar", "action": "グループ化されたアプリのウィンドウ間でフォーカスを切り替える" }, { "key": "Ctrl + Shift + select an app icon on the taskbar", "action": "タスクバーのアプリを管理者として開く" }, { "key": "Shift + right-click an app icon on the taskbar", "action": "アプリのウィンドウメニューを表示する" }, { "key": "Shift + right-click a grouped taskbar button", "action": "グループのウィンドウメニューを表示する" }, { "key": "Shift + select an app icon on the taskbar", "action": "タスクバーのアプリの新しいインスタンスを開く" }, { "key": "Windows キー + Alt + Enter", "action": "タスクバーの設定を開く" }, { "key": "Alt + Shift + Arrow", "action": "タスクバー上のアプリの位置を移動する" }, { "key": "Windows キー + number", "action": "タスクバーにピン留めされたアプリを開く、またはそのアプリに切り替える" }, { "key": "Windows キー + Shift + T", "action": "タスクバー上の前のアプリに移動する" }, { "key": "Alt + Esc", "action": "ウィンドウを開いた順番で切り替える" }, { "key": "Windows キー + Alt + Down arrow", "action": "アクティブウィンドウを画面の下半分にスナップする" }, { "key": "Windows キー + Alt + Up arrow", "action": "アクティブウィンドウを画面の上半分にスナップする" }, { "key": "Windows キー + Alt + H", "action": "音声入力が開いているときにキーボードにフォーカスする" }, { "key": "Windows キー + Ctrl + C", "action": "カラーフィルターをオン/オフにする" }, { "key": "Windows キー + Ctrl + V", "action": "クイック設定の音声出力ページを開く" }, { "key": "Windows キー + Ctrl + Enter", "action": "ナレーターを開く" }, { "key": "Windows キー + Ctrl + Spacebar", "action": "以前選択した入力オプションに切り替える" }]
+    };
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function generateQuiz() {
+      const difficulty = document.getElementById('difficulty').value;
+      const allQuestions = questionsData[difficulty];
+      const quizForm = document.getElementById('quizForm');
+      const checkButton = document.getElementById('checkButton');
+      const scoreDisplay = document.getElementById('score');
+      scoreDisplay.textContent = "";
+      quizForm.innerHTML = '';
+      // generate 7 unique questions
+      const questions = shuffle([...allQuestions]).slice(0, 7);
+      currentQuiz = questions;
+      currentDifficulty = difficulty;
+      questions.forEach((question, index) => {
+        const options = [question.key];
+        const otherKeys = allQuestions.filter(q => q.key !== question.key).map(q => q.key);
+        shuffle(otherKeys).slice(0, 3).forEach(k => options.push(k));
+        shuffle(options);
+        const fieldset = document.createElement('fieldset');
+        fieldset.classList.add('question');
+        const legend = document.createElement('legend');
+        legend.textContent = `問${index + 1}: ${question.action}`;
+        fieldset.appendChild(legend);
+        options.forEach(opt => {
+          const label = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = `question${index}`;
+          input.value = opt;
+          label.appendChild(input);
+          label.appendChild(document.createTextNode(' ' + opt));
+          fieldset.appendChild(label);
+        });
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = `answer${index}`;
+        hidden.value = question.key;
+        fieldset.appendChild(hidden);
+        quizForm.appendChild(fieldset);
+      });
+      checkButton.style.display = 'inline-block';
+    }
+
+    function checkAnswers() {
+      // まず氏名が入力されているか確認する
+      const userNameInput = document.getElementById('userName');
+      const userName = userNameInput ? userNameInput.value.trim() : "";
+      if (!userName) {
+        alert('氏名を入力してください。');
+        return;
+      }
+      const quizForm = document.getElementById('quizForm');
+      const fieldsets = quizForm.querySelectorAll('fieldset.question');
+      // Check for unanswered questions
+      for (let i = 0; i < fieldsets.length; i++) {
+        const selected = fieldsets[i].querySelector(`input[name="question${i}"]:checked`);
+        if (!selected) {
+          alert('未回答の問題があります。全て回答してください。');
+          return;
+        }
+      }
+      // Confirm before grading
+      if (!confirm('この内容で採点してよいですか？')) {
+        return;
+      }
+      let score = 0;
+      // Clear previous result classes
+      fieldsets.forEach((fieldset, index) => {
+        const labels = fieldset.querySelectorAll('label');
+        labels.forEach(label => { label.classList.remove('correct', 'wrong'); });
+      });
+      fieldsets.forEach((fieldset, index) => {
+        const selected = fieldset.querySelector(`input[name="question${index}"]:checked`);
+        const correctKey = fieldset.querySelector(`input[name="answer${index}"]`).value;
+        if (selected && selected.value === correctKey) {
+          // Correct answer
+          selected.parentNode.classList.add('correct');
+          score++;
+        } else {
+          // Mark correct answer
+          const radios = fieldset.querySelectorAll('input[type="radio"]');
+          radios.forEach(radio => {
+            if (radio.value === correctKey) { radio.parentNode.classList.add('correct'); }
+          });
+          // Mark wrong selected answer if any
+          if (selected) { selected.parentNode.classList.add('wrong'); }
+        }
+      });
+      document.getElementById('score').textContent = `あなたのスコア: ${score} / ${fieldsets.length}`;
+      // 結果オブジェクトを作成して送信
+      const details = [];
+      fieldsets.forEach((fieldset, i) => {
+        const selected = fieldset.querySelector(`input[name="question${i}"]:checked`);
+        const correctKey = currentQuiz[i].key;
+        const action = currentQuiz[i].action;
+        details.push({ action: action, correctKey: correctKey, selectedKey: selected ? selected.value : '', isCorrect: selected && selected.value === correctKey });
+      });
+      const resultData = { name: userName, difficulty: currentDifficulty, score: score, total: fieldsets.length, details: details };
+      sendResults(resultData);
+      // --- スプシ向けデータ作成 ---
+      const resultPayload = {
+        name: userName,
+        difficulty: currentDifficulty,
+        score: `${score}/${fieldsets.length}`,
+        q1: currentQuiz[0].action,
+        q2: currentQuiz[1].action,
+        q3: currentQuiz[2].action,
+        q4: currentQuiz[3].action,
+        q5: currentQuiz[4].action,
+        q6: currentQuiz[5].action,
+        q7: currentQuiz[6].action,
+        a1: (fieldsets[0].querySelector(`input[name="question0"]:checked`).value === currentQuiz[0].key) ? "○" : "×",
+        a2: (fieldsets[1].querySelector(`input[name="question1"]:checked`).value === currentQuiz[1].key) ? "○" : "×",
+        a3: (fieldsets[2].querySelector(`input[name="question2"]:checked`).value === currentQuiz[2].key) ? "○" : "×",
+        a4: (fieldsets[3].querySelector(`input[name="question3"]:checked`).value === currentQuiz[3].key) ? "○" : "×",
+        a5: (fieldsets[4].querySelector(`input[name="question4"]:checked`).value === currentQuiz[4].key) ? "○" : "×",
+        a6: (fieldsets[5].querySelector(`input[name="question5"]:checked`).value === currentQuiz[5].key) ? "○" : "×",
+        a7: (fieldsets[6].querySelector(`input[name="question6"]:checked`).value === currentQuiz[6].key) ? "○" : "×"
+      };
+
+      sendResults(resultPayload);
+    }
+
+    function sendResults(results) {
+      fetch("https://script.google.com/macros/s/AKfycbw8fm3MUVeI7Jul5Y3O3p8Y5fOxMkyv6hKIniueVwDh28PUL0CGurWD6Dvzjy8kzRYS7Q/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(results)
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log("送信成功:", data);
+          alert("結果をスプレッドシートに保存しました！");
+        })
+        .catch(err => {
+          console.error("送信エラー:", err);
+          alert("送信中にエラーが発生しました");
+        });
+      console.log('送信データ:', results);
+    }
+
+  </script>
+</body>
+
+</html>
